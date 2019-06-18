@@ -1,0 +1,291 @@
+\documentclass[a4paper,12pt]{article}
+\newcommand\tab[1][0.6cm]{\hspace*{#1}}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{hyperref}
+\usepackage[top=2cm, bottom=2cm, left=2cm, right=2cm]{geometry}
+\usepackage{listings}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{float}
+
+\title{ \sc{Sprawozdanie końcowe} \\
+\emph{Projekt ,,Group of Visionaires''} }
+
+\author{Mateusz Smoliński}
+
+\begin{document}
+
+
+\maketitle
+\thispagestyle{empty}
+
+\tableofcontents
+
+\newpage
+
+\section{Wstęp}
+
+\tab Sprawozdanie powstało w celu podsumowania projektu ,,Group of Visionaires''. Zawiera ono opis zastosowanego rozwiązania i algorytmu rozwiązującego problem arbitrażu i najkorzystniejszej wymianu. Opisane zostały także zmiany względem specyfikacji funkcjonalnej i implementacyjnej, które zostały podjęte już w trakcie implementacji projektu. Dokument zawiera także wnioski, jakie zostały wyciągnięte przy powstawaniu projektu.
+
+Projekt ,,Group of Visionaires'' ma za zadanie analizę sytuacji na giełdzie walutowej oraz wybór najkorzystniejszej ścieżki dla wymiany walut. Dodatkową funkcją jest wykrywanie ekonomicznego arbitrażu, czyli sytuacji, w której możliwa jest wymiana cykliczna waluty przynosząca zysk -- możliwość włożenia pieniędzy w walucie X oraz wykonanie wymian, które zakończą się na tej samej walucie X z wartością pieniężną większą niż początkowa. 
+
+Program napisany w ramach tego projektu otrzymuje plik tekstowy. Powinien on zawierać wypisaną aktualną sytuację na giełdzie walut, według poniższego schematu: 
+
+\begin{lstlisting}
+# Waluty (id | symbol | pelna nazwa)
+0 EUR euro
+1 GBP funt brytyjski
+2 USD dolar amerykanski
+# Kursy walut (id | symbol (waluta wejsciowa) | symbol (waluta 
+wyjsciowa) | kurs | typ oplaty | oplata
+0 EUR GBP 0.8889 PROC 0.0001
+1 GBP USD 1.2795 PROC 0
+2 EUR USD 1.1370 STALA 0.025
+3 USD EUR 0.8795 STALA 0.01
+\end{lstlisting}
+
+Program powinien być uruchomiony z zestawem argumentów. Specyfikacja funkcjonalna zakładała uruchomienie go z 3 lub 4 argumentami -- nazwa pliku z danymi, kwota, waluta wejściowa i ewentualnie waluta wyjściowa. Ze względu na zmianę w interpretacji polecenia program może być też uruchomiony z dwoma argumentami -- w tym wypadku zostanie wyszukany dowolny arbitraż, jeżeli takowy występuje. Tym niemniej, funkcja opisana w specyfikacji funkcjonalnej (uruchomienie programu z podaniem jednej waluty i szukanie dla niej arbitrażu) wciąż może być używana przez użytkownika, co daje większą dowolność używania programu. Ostatecznie, program może otrzymać od 2 do 4 argumentów -- nazwę pliku, kwotę wejściową i opcjonalnie 1 lub 2 waluty podane w postaci skrótów walutowych podanych w pliku.
+
+Wynikiem działania programu jest dokładne wypisanie ścieżki wymiany walut -- w zależności od liczby argumentów najkorzystniejszej wymiany walut lub korzystnego cyklu. Zostaje także wypisana końcowa wartość waluty po dokonaniu wymiany. W przypadku, gdy wymiana jest niemożliwa lub arbitraż nie został odnaleziony program wypisze stosowny komunikat. W przypadku wystąpienia błędu wynikającego ze źle wprowadzonych danych również zostanie wypisany komunikat, wskazujący na przyczynę wystąpienia błędu.
+
+\newpage
+\section{Działanie programu}
+
+\subsection{Opis algorytmu}
+
+\tab Algorytm zastosowany w finalnej wersji programu opiera się na przeszukiwaniu grafu wszerz (BFS). Traktując waluty jako wierzchołki grafu i kursy wymian jako krawędzie program przeszukuje graf w poszukiwaniu najkorzystniejszej wymiany. 
+
+Proces ten rozpoczyna się w wierzchołku reprezentującym walutę wejściową. W programie zamiast standardowej dla przeszukiwania BFS kolejki wierzchołków zastosowano kolejkę list -- dróg, które potencjalnie mogą stanowić najkorzystniejsze ścieżki. Dopóki kolejka nie jest pusta (wszystkie ścieżki nie zostaną sprawdzone) kolejne ścieżki są wyjmowane z kolejki, po czym program sprawdza ich możliwe kontynuacje. Jeśli istnieją jeszcze nieodwiedzone w danej ścieżce wierzchołki i istnieje krawędź pozwalająca na przejście do nich, do kolejki trafiają nowe ścieżki stanowiące aktualnie rozpatrywaną ścieżkę oraz te nieodwiedzone wierzchołki. W przypadku odnalezienia połączenia dokonywane jest obliczenie wyjściowej wartości waluty, po czym wynik jest porównywany z wymianą aktualnie uważaną za najkorzystniejszą. Jeśli ścieżka okaże się być lepsza, zastępuje tą zapisaną wcześniej.
+
+Dla szukania arbitrażu algorytm przebiega bardzo podobnie, z kilkoma zastrzeżeniami:
+
+\begin{itemize}
+
+\item do ścieżki może dołączyć wierzchołek odwiedzony, pod warunkiem, że jest to wierzchołek początkowy,
+
+\item za wierzchołek docelowy przyjmuje się wierzchołek początkowy,
+
+\item Po kalkulacji wyjściowej wartości waluty sprawdzane jest, czy jest ona większa od wartości początkowej.
+
+\end{itemize}
+
+Po zakończeniu działania algorytmu wynikiem jest wartość uznana za najwyższą. Jeśli wartość domyślna ścieżki nie została nadpisana, program dostanie informację o braku połączenia lub arbitrażu.
+
+\subsection{Przykład działania}
+
+\tab Poniższe przykłady zostały wykonane na komputerze opisanym w specyfikacji implementacyjnej, uruchomione w cmd.exe.  
+
+Pierwszy rysunek ukazuje poprawne działanie programu dla pliku z danymi dane.txt zawierającego dokładnie te same dane, które zostały umieszczone we wstępie tego sprawozdania.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=15cm] a
+\caption{Uruchomienie programu z wyszukiwaniem ścieżki}
+\label{fig:obrazek 1}
+\end{figure}
+
+Kolejny obraz przedstawia uruchomienie programu dla tych samych danych, ale z poszukiwaniem dowolnego arbitrażu.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=15cm] b
+\caption{Uruchomienie programu -- dowolny arbitraż}
+\label{fig:obrazek 2}
+\end{figure}
+
+Na trzecim rysunku widzimy uruchomienie programu w trzeciej opcji -- szukania arbitrażu dla konkretnej waluty.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=15cm] g
+\caption{Uruchomienie programu -- konkretny arbitraż}
+\label{fig:obrazek 3}
+\end{figure}
+
+Kolejny obrazek to już niepoprawne uruchomienie programu -- w tym wypadku użytkownik podał za mało danych, zabrakło przynajmniej podania kwoty wejściowej.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=15cm] c
+\caption{Uruchomienie programu -- za mało danych}
+\label{fig:obrazek 4}
+\end{figure}
+
+Piąty rysunek to próba uruchomienia programu dla pliku, który nie istnieje.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=15cm] d
+\caption{Uruchomienie programu -- niepoprawne dane}
+\label{fig:obrazek 5}
+\end{figure}
+
+Dwa kolejne obrazki to przykłady uruchomienia programu dla plików, które nie zostały poprawnie zapisane. Są to pliki użyte do testowania programu, których treść zamieszczono poniżej. Obrazki ukazują reakcję programu na konkretne błędy w pliku tekstowym.
+
+Pierwszy plik to data3.txt: 
+
+\begin{lstlisting}
+# Waluty (id | symbol | pelna nazwa) 
+0 EUR Euro
+1 PLN Zloty
+ Kursy walut (id | symbol (waluta wejsciowa)... 
+0 EUR PLN 0.8889 PROC 0.0001
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=15cm] e
+\caption{Działanie programu z błędem krytycznym w pliku}
+\label{fig:obrazek 6}
+\end{figure}
+
+Kolejny plik to data4.txt:
+\begin{lstlisting}
+# Waluty (id | symbol | pelna nazwa) 
+0 EUR Euro
+1 PLN
+# Kursy walut (id | symbol (waluta wejsciowa)...
+0 EUR PLN 0.8889 PROC 0.0001
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=15cm] f
+\caption{Działanie programu z mniej ważnym błędem w pliku}
+\label{fig:obrazek 7}
+\end{figure}
+
+
+\section{Zmiany względem specyfikacji funkcjonalnej}
+
+
+\subsection{Argumenty wywołania}
+
+\tab Tak, jak zostało już wymienione w poprzedniej części sprawozdania, program może być teraz wywołany z tylko dwoma argumentami -- w takim wypadku wyszukiwany jest dowolny arbitraż. W przypadku wywołania programu w taki sposób program wypisze jeden arbitraż dla pierwszej waluty, dla jakiej występuje -- na przykład, jeśli w pliku z danymi znajduje się 6 walut i arbitraże występują dla waluty z numerami 2 i 4, program wypisze arbitraż dla waluty z ID równym 2.
+
+\subsection{Sytuacje wyjątkowe}
+
+\tab W pierwotnej koncepcji w przypadku niewłaściwych danych w pojedynczej linii pliku z danymi program miał wypisać komunikat: ,,Warning: Data file contains invalid data in <number\_of\_line> line. It will be ignored by program.'' Ze względu na zastosowanie wyjątków, które jest opisane szerzej w zmianach względem specyfikacji implementacyjnej, komunikaty wypisywane przez program są dokładniejsze. Na przykład, gdy w pliku z danymi wartość opłaty zawiera niewłaściwy znak, na przykład literę, program wypisuje komunikat: ,,Warning: Data file contains invalid fee value in <number\_of\_line> line. It will be ignored by program.'' Może to ułatwić odnalezienie i poprawienie błędu użytkownikowi.
+
+Specyfikacja funkcjonalna nie uwzględniała też przypadków niepożądanych, takich jak:
+\begin {itemize}
+\item opłata procentowa przekraczająca 1,
+\item kurs z waluty X na tą samą walutę X,
+\item kurs napisany dwukrotnie.
+\end {itemize}
+
+Ostateczna wersja programu ignoruje takie linie, również wypisując odpowiadające problemowi komunikaty.
+
+\newpage
+
+\section{Zmiany względem specyfikacji implementacyjnej}
+
+\tab W strukturze całego programu nastąpiła jedna istotna zmiana -- ze względu na wielkość pakietu \textit{groupofvisionaires} przechowującego pierwotnie wszystkie klasy programu został wydzielony drugi pakiet, nazwany \textit{filereader}, przechowujący klasę \textit{DataReader} oraz wyjątki \textit{ReadDataException} oraz \textit{ParseLineException} używane przez program przy obsłudze błędów związanych właśnie z odczytem pliku. Ich dokładniejsze zastosowanie opisano poniżej, w sekcjach opisujących metody klasy \textit{DataReader}.
+
+\subsection{Klasa CurrencyMatrix}
+
+\tab Klasa odpowiedzialna za przechowywanie danych wczytanych z pliku nie uległa dużej zmianie względem specyfikacji implementacyjnej. Otrzymała jedynie jedno dodatkowe pole w postaci podawanej na początku istnienia klasy liczby n, odpowiadającej za ilość walut. Do metod dostępowych doszła zatem metoda \textit{getN}, która wypisuje tą liczbę w innym miejscu kodu -- w szczególności w trakcie iterowania po tablicy walut \textit{currencies}, która jest prywatna i nie można dostać jej długości z zewnątrz.
+
+\subsection{Klasa DataReader}
+
+\tab Klasa wczytująca dane z pliku została rozbudowana i ostatecznie składa się ona z trzech metod.
+
+\subsubsection{Metoda readData}
+
+\begin{itemize}
+\item \begin{lstlisting}
+public static CurrencyMatrix readData (File f)
+throws ReadDataException
+\end{lstlisting}
+\end{itemize}
+
+\tab Metoda \textit{readData} zgodnie ze wcześniejszym założeniem zwraca przygotowany obiekt klasy \textit{CurrencyMatrix} w przypadku powodzenia. Jeżeli w trakcie wczytywania wystąpi problem uniemożliwiający poprawne działanie programu, metoda wyrzuca wyjątek \textit{ReadDataException}, który jest odczytywany w metodzie \textit{main} klasy \textit{GroupOfVisionaires}.
+
+\subsubsection{Metoda parseCurrency}
+
+\begin{itemize}
+\item \begin{lstlisting}
+private static Currency parseCurrency(String line,
+int lineCounter) throws ParseLineException
+\end{lstlisting}
+\end{itemize}
+
+\tab Metoda \textit{parseCurrency} powstała na późniejszym etapie projektu, w celu poprawy czytelności i usprawnienia obsługi błędów w klasie \textit{DataReader}. Otrzymuje ona wczytaną linię z pliku z danymi oraz numer linii, która jest aktualnie wczytywana. W przypadku poprawnej analizy linii metoda zwraca obiekt klasy \textit{Currency}, gotowy do użycia w dalszej części programu. 
+
+Jeśli w trakcie wczytywania nastąpi problem, metoda wyrzuca wyjątek \textit{ParseLineException}, który jest odbierany przez metodę \textit{readData}. W przeciwieństwie do wyjątku \textit{ReadDataException} nie powoduje on zakończenia próby wczytania pliku, a jedynie zignorowanie błędnej linii i przejście do kolejnego etapu programu.
+
+\subsubsection{Metoda parseRate}
+
+\begin{itemize}
+\item \begin{lstlisting}
+private static void parseRate(String line,
+int lineCounter, CurrencyMatrix currencyMatrix)
+throws ParseLineException
+\end{lstlisting}
+\end{itemize}
+
+\tab Metoda \textit{parseRate} powstała na późniejszym etapie projektu, podobnie jak poprzednia metoda, w celu oddzielenia obszernej procedury analizy linii z wymianą dwóch walut. W przeciwieństwie do metody \textit{parseCurrency} nie zwraca ona przygotowanego obiektu, gdyż wybór indeksów w macierzy  \textit{CurrencyMatrix} jest bezpośrednio powiązane z odczytem tej linii oraz obsługą błędów. Otrzymuje ona wczytaną linię z pliku z danymi, numer linii, która jest aktualnie wczytywana oraz macierz \textit{CurrencyMatrix}.
+
+Jeśli w trakcie wczytywania nastąpi problem, metoda wyrzuca wyjątek \textit{ParseLineException}, który jest odbierany przez metodę \textit{readData}. Podobnie jak w przypadku metody \textit{parseCurrency} nie powoduje on zakończenia próby wczytania pliku, a jedynie zignorowanie błędnej linii i przejście do kolejnego etapu programu.
+
+\subsection{Klasa ExchangeSearcher}
+
+\begin{itemize}
+\item \begin{lstlisting}
+public String SearchForArbitrage(double amount,
+CurrencyMatrix cm, Currency currency)
+\end{lstlisting}
+
+\item \begin{lstlisting}
+public String SearchForBestExchange(double amount,
+CurrencyMatrix cm, Currency inputCurrency,
+Currency outputCurrency)
+\end{lstlisting}
+\end{itemize}
+
+\tab Metody znajdujące się w tej klasie nie uległy dużej zmianie. Wykonują one dokładnie takie same czynności, jakie były przewidziane na wcześniejszym etapie projektu. Jedyną różnicą jest to, że metody nie wypisują na standardowym wyjściu odnalezionych ścieżek (lub komunikatów), ale zwracają je do metody \textit{main} w postaci obiektu klasy String.
+
+\subsection{Klasa GroupOfVisionaires} 
+
+\tab Również klasa główna projektu przeszła pewne zmiany w stosunku do planów ze specyfikacji implementacyjnej. Podstawową różnicą jest to, że zyskała ona pola odpowiadające danym odbieranym od użytkownika -- zarówno tych z argumentów wywołania, jak i odczytywanych z pliku, co ułatwiło przekazywanie tych danych w programie.
+
+\subsubsection{Metoda checkArgs}
+
+\begin{itemize}
+\item \begin{lstlisting}
+public boolean checkArgs(String[] args)
+\end{lstlisting}
+\end{itemize}
+
+\tab Metoda sprawdzająca argumenty wywołania została przygotowana tak, żeby realizować wykonanie programu także dla dwóch argumentów -- dla wyszukiwania dowolnego arbitrażu. Ze względu na testy jednostkowe w programie w finalnej wersji programu metoda ta jest dostępna publicznie.
+
+\subsubsection{Metoda main}
+
+\begin{itemize}
+\item \begin{lstlisting}
+public static void main(String[] args)
+\end{lstlisting}
+\end{itemize}
+
+\tab Metoda \textit{main} nie zmieniła się znacząco, poza obsługą wyszukiwania dowolnego arbitrażu dla dwóch podanych przez użytkownika argumentów. Występuje w niej obiekt klasy \textit{GroupOfVisionaires}, który funkcjonuje jak kontener dla danych i to na nim uruchamiana jest metoda \textit{checkArgs}.
+
+\section{Wnioski}
+
+\begin{enumerate}
+
+\item Enumeracja w programie wpłynęła pozytywnie na czytelność kodu. Zastosowanie jej do definiowania typu opłat, jak i stanu metody wczytującej pozwoliła na sprawne i czytelne sterowanie programem.
+
+\item Implementacja listy list w metodach wyszukujących ścieżek mogła nie być najwydajniejszym rozwiązaniem, jednak program działa bardzo szybko nawet dla wielu danych.
+
+\item Zastosowany system wyjątków przy odczytywaniu pliku okazał się być bardzo wygodny. Poprawia on czytelność kodu i ułatwia przepływ sterowania w programie, w szczególności, gdy metoda ma zwracać inną wartość.
+
+\item Samo opracowanie algorytmu wyszukującego ścieżkę w programie nie stanowiło dużego problemu. Znacznie więcej czasu pochłonęła dokładna obsługa błędów oraz testowanie programu pod kątem różnych możliwych scenariuszy.
+
+\item Testy jednostkowe ukazały wiele błędów popełnionych w kodzie, ale testy akceptacyjne dokonane poza IDE ukazały właściwe działanie programu, pozwalając na poprawę rzeczy, na które wcześniej nie zwracało się uwagi.
+
+\end{enumerate}
+
+\end{document}

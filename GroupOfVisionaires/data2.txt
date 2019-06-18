@@ -1,0 +1,5 @@
+ Waluty (id | symbol | pe³na nazwa) 
+0 EUR Euro
+1 PLN Z³oty
+ Kursy walut (id | symbol (waluta wejœciowa) | symbol (waluta wyjœciowa) | kurs | typ op³aty | op³ata 
+0 EUR PLN 0.8889 PROC 0.0001

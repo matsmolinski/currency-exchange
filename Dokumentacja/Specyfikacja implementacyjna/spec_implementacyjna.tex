@@ -1,0 +1,223 @@
+\documentclass[a4paper,11pt]{article}
+\newcommand\tab[1][0.6cm]{\hspace*{#1}}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{hyperref}
+\usepackage[top=2cm, bottom=2cm, left=2cm, right=2cm]{geometry}
+\usepackage{listings}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+
+\rfoot{\thepage \hspace{lpt} / \pageref{LastPage}}
+
+\title{ \sc{Specyfikacja funkcjonalna} \\
+\emph{Projekt ,,Group of Visionaires''} }
+
+\author{Mateusz Smoliński}
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{empty}
+
+\tableofcontents
+
+\newpage
+
+\section{Wstęp}
+
+\tab Celem projektu jest napisanie programu, który wykona dwa zadania: 
+
+\begin{itemize}
+\item wykrywanie korzystnej ścieżki wymiany dla wskazanej waluty,
+\item wykrywanie sytuacji ekonomicznego arbitrażu, czyli kombinacji, gdy kursy walut są tak ułożone, aby wymiana cykliczna zwracała więcej niż kwota wejściowa.
+\end{itemize}
+
+Program będzie uruchamiany z 3 lub 4 argumentami:
+
+\begin{itemize}
+\item nazwę pliku z danymi, w którym zawarte są bieżące kursy walut,
+\item kwotę wejściową,
+\item walutę wejściową,
+\item walutę wyjściową (argument opcjonalny).
+\end{itemize}
+
+Efektem pracy programu będzie wypisanie na standardowym strumieniu wyjścia ciągu najkorzystniejszej wymiany walut, informacja o braku takiego ciągu lub odpowiedni komunikat o błędzie w przypadku niepoprawnych danych.
+
+Projekt ,,Group of Visionaires'' zostanie napisany w języku Java, w środowisku NetBeans IDE 8.2 na wersji Javy 1.8.0\_162. Implementacja oraz testowanie programu odbywać się będą na komputerze o następujących parametrach: 
+\begin{itemize}
+
+\item system operacyjny Windows 10 Home ver. 1803,
+\item procesor Intel Core i5-7200U,
+\item pamięć RAM 8,00 GB,
+\item karty graficzne Intel HD Graphics 620 + NVIDIA GeForce 940MX.
+
+\end{itemize}
+\section{Diagram klas}
+
+\tab Program składać się będzie z 6 klas i jednego typu wyliczeniowego. Zależności pomiędzy poszczególnymi klasami obrazuje Rysunek 1.
+
+W celu poprawy czytelności na diagramie klas nie zostały uwzględnione metody dostępowe dla klas Currency, ExchangeRate oraz CurrencyMatrix oraz konstruktory dwóch pierwszych klas, które we wszystkich przypadkach wypełniają pola danych klas.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=15cm]c
+\caption{Diagram klas}
+\label{fig:obrazek c}
+\end{figure}
+
+\newpage
+
+\section{Opis klas/metod}
+
+
+\subsection{Klasa GroupOfVisionaires}
+
+\tab Jest to główna klasa tego programu. Jest zbudowana z dwóch kluczowych metod odpowiedzialnych za interpretację przyjętych argumentów i przesłanie ich do dalszej części programu, po upewnieniu się, że zostały one poprawnie podane. Jedną z tych metod jest \textit{main}, która rozpoczyna działanie programu. Nazwa tej klasy odpowiada nazwie całego projektu.
+
+\subsubsection{Metoda checkArgs}
+
+\begin{itemize}
+\item \begin{lstlisting}
+private boolean checkArgs(String[] args)
+\end{lstlisting}
+\end{itemize}
+
+\tab Jest to metoda sprawdzająca podane przez użytkownika argumenty. Jej zadaniem jest przede wszystkim zweryfikowanie, czy użytkownik wprowadził prawidłowy skrót waluty (lub skróty walut). Metoda sprawdza również, czy nie została wprowadzona niepoprawna kwota. W przypadku napotkania błędu lub niezidentyfikowanej waluty wypisze ona odpowiedni komunikat na standardowym wyjściu i zwróci fałsz, uniemożliwiając kontynuowanie programu dla niepoprawnych danych. Po udanej weryfikacji metoda zwraca prawdę.
+
+\subsubsection{Metoda main}
+
+\begin{itemize}
+\item \begin{lstlisting}
+public static void main(String[] args)
+\end{lstlisting}
+\end{itemize}
+
+\tab Poza rozpoczęciem działania programu, zadaniem metody \textit{main} będzie także zweryfikowanie ilości argumentów oraz próba otwarcia pliku z danymi. W przypadku powodzenia wywoła statyczną metodę \textit{readData}, która została opisana poniżej. Jeśli \textit{readData} nie zgłosi żadnych wyjątków, metoda \textit{main} wywoła opisaną w poprzednim podpunkcie metodę \textit{checkArgs}. Jeżeli ona zwróci prawdę, nastąpi rozpoczęcie właściwego działania programu i zebrane dane (w postaci \textit{args} oraz zwróconego przez \textit{readData} obiektu \textit{CurrencyMatrix}) zostaną przekazane do odpowiedniej metody z klasy \textit{ExchangeSearcher}. Po zakończeniu jej działania program zostanie zamknięty.
+
+\subsection{Klasa DataReader}
+
+\tab Klasa \textit{DataReader} jest odpowiedzialna za odczyt danych z pliku tekstowego oraz ewentualną obsługę błędów związanych z tym plikiem. Składa się z jednej, kluczowej metody statycznej, która nie tylko odczytuje dane z pliku podanego przez użytkownika, ale także przygotowuje je w formie zrozumiałej dla reszty programu -- w postaci obiektu klasy \textit{CurrencyMatrix}.
+
+\subsubsection{Metoda readData}
+\begin{itemize}
+\item \begin{lstlisting}
+public static CurrencyMatrix readData (File f)
+\end{lstlisting}
+\end{itemize}
+
+\tab Metoda \textit{readData} otrzymuje jako argument plik  z danymi, wcześniej sprawdzony w metodzie \textit{main} jako poprawny plik tekstowy. Odczytuje ona dane z tego pliku, trzymając się konwencji ustalonej w specyfikacji funkcjonalnej -- deklaracje walut i kursów wymian są poprzedzone linią rozpoczynającą się od znaku ,,\#''. Pierwotnie odczytane dane są zapisywane do list. Po wczytaniu wszystkich danych metoda tworzy obiekt klasy \textit{CurrencyMatrix} i zapisuje zinterpretowane dane do macierzy. W przypadku zauważenia niepożądanych danych lub danych podanych w niewłaściwy sposób metoda wypisuje odpowiednie komunikaty na standardowym wyjściu, a w przypadku, gdy działanie programu nie może zostać kontynuowane -- zwraca wyjątek, który musi zostać obsłużony w metodzie \textit{main}.
+
+
+\subsection{Klasa CurrencyMatrix}
+\tab Klasa reprezentująca najważniejsze dane, jakie dostajemy od użytkownika. Ma postać macierzy reprezentującej kursy pomiędzy dwoma walutami o danym ID. Poza tą macierzą przechowywana jest również tablica walut, o indeksach odpowiadających ID danej waluty. Oprócz metod dostępowych klasa posiada jedynie konstruktor.
+
+\subsubsection{Konstruktor klasy CurrencyMatrix}
+\begin{itemize}
+\item \begin{lstlisting}
+public CurrencyMatrix (int n)
+\end{lstlisting}
+\end{itemize}
+
+\tab Jest to konstruktor tej klasy, który tworzy macierz na podstawie podanej liczby walut. Podana liczba będzie odpowiadać zarówno rozmiarowi tablicy walut, jak i będzie stanowić oba rozmiary (wysokość i szerokość) macierzy.
+
+\subsection{Klasa Currency}
+
+\tab Klasa reprezentuje waluty w programie. Większość logiki programu opierać się będzie na ID walut, a nie ich nazwach, przez co program będzie się odwoływać do tej klasy głównie na początku i na końcu programu -- przy wczytywaniu oraz tworzeniu wynikowych napisów. Przechowuje ona pełne nazwy walut oraz ich nazwy skrócone. Klasa posiada jedynie metody dostępowe oraz konstruktor wprowadzający oba pola klasy.
+
+
+\subsection{Klasa ExchangeRate}
+
+\tab W tej klasie zawarty jest kurs pomiędzy dwoma walutami oraz informacje dotyczące opłaty ponoszonej w wyniku wymiany walut. Ze względu na to, że opłata może mieć postać procentową lub stałą od waluty wynikowej, jednym z jej pól jest \textit{typeOfFee}, reprezentowany przez wyliczeniowy typ danych przedstawiony na diagramie klas (Rysunek 1). Klasa ta, podobnie jak klasa \textit{Currency} posiada jedynie metody dostępowe oraz konstruktor wypełniający wszystkie pola tej klasy.
+
+\subsection{Klasa ExchangeSearcher}
+
+\tab W tej klasie zawarta jest najważniejsza logika programu. Zawiera ona dwie kluczowe metody, które wyszukują wybraną przez użytkownika ścieżkę. Nie posiada ona żadnych pól.
+
+\subsubsection{Metoda searchForArbitrage}
+
+\tab 
+\begin{itemize}
+\item \begin{lstlisting}
+public void searchForArbitrage (double amount, CurrencyMatrix cm,
+Currency currency)
+\end{lstlisting}
+\end{itemize}
+
+\tab Metoda jest odpowiedzialna za wyszukanie ekonomicznego arbitrażu (jeśli takowy występuje). Otrzymuje jako argumenty macierz \textit{CurrencyMatrix}, wartość początkową oraz walutę. Wynikiem jej działania jest wypisanie na ekran odnalezionej ścieżki lub informacji o jej braku. 
+
+\subsubsection{Metoda searchForBestExchange}
+
+\tab 
+\begin{itemize}
+\item \begin{lstlisting}
+public void searchForBestExchange (double amount, CurrencyMatrix cm,
+Currency inputCurrency, Currency outputCurrency)
+\end{lstlisting}
+\end{itemize}
+
+\tab Metoda jest odpowiedzialna za wyszukanie najlepszej ścieżki wymiany walut. Otrzymuje jako argumenty macierz \textit{CurrencyMatrix}, wartość początkową, walutę początkową oraz walutę docelową. Wynikiem jej działania jest wypisanie na ekran najlepszej ścieżki wymiany lub informacji o jej braku.
+
+\section{Działanie programu i zastosowanie algorytmu}
+
+\tab Uruchomienie programu powoduje rozpoczęcie wykonywania funkcji \textit{main}. Po weryfikacji ilości argumentów i wczytaniu pliku z danymi przez metodę statyczną \textit{readData} następuje weryfikacja pozostałych argumentów metodą \textit{checkArgs}. Następnie, na podstawie ilości podanych argumentów program uruchamia odpowiednią metodę wyszukującą. 
+
+Wyszukiwanie oparte będzie na algorytmie przeszukiwania grafu wszerz (BFS). Zastosowanie algorytmów znajdujących najkrótszą ścieżkę w grafach ważonych, takich jak algorytm Dijkstry nie pomoże w rozwiązaniu problemu wymiany walut, gdyż wartość po przejściu przez kolejny wierzchołek (walutę) wartość może się zmniejszyć i wymagałoby to dodatkowych modyfikacji algorytmu. Algorytm przeszukiwania wszerz pozwala na odczytanie wszystkich możliwych ścieżek, których porównanie pozwoli na pewne ustalenie ścieżki najkorzystniejszej. Działanie metod wyszukujących będzie oparte na wyborze faworyta -- gdy zostanie odnaleziona ścieżka spełniająca warunek, zostanie ona zapisana w postaci listy walut oraz wartości końcowej. Działanie algorytmu będzie kontynuowane i w przypadku korzystniejszej wartości końcowej wartości dotychczas faworyzowane zostaną zastąpione.
+
+Ostatnim etapem algorytmu jest wypisanie odnalezionej ścieżki wraz z wartością końcową. W przypadku niepowodzenia wyszukiwania zostanie wypisany odpowiedni komunikat. Po wykonaniu tej czynności program zakończy działanie.
+
+\section{Testy jednostkowe}
+
+\tab Projekty testów zakładają użycie narzędzia JUnit. Poniżej znajduje się lista testów planowanych dla kluczowych metod programu, dla każdej z nich przewidziane są różne przypadki otrzymanych danych. 
+
+\subsection{Testy klas Currency i ExchangeRate}
+
+\tab Testy w tych klasach ograniczą się do sprawdzenia poprawności zapisywanych danych. Dla pierwszej z nich zostaną wprowadzone przykładowe nazwy skrócone i pełne, dla drugiej wartości kursów, wartości opłat oraz oba typy opłat, po czym zostanie sprawdzone, czy nazwy wyjmowane getterami są równoważne tym ustawionym setterami.
+
+\subsection{Testy klasy CurrencyMatrix}
+
+\tab Klasa \textit{CurrencyMatrix} będzie testowana podobnie do dwóch poprzednich klas. Główną różnicą w tej klasie jest to, że składa się ona z tablicy i macierzy, dlatego przetestowane zostanie ustawianie wartości w różnych miejscach macierzy -- zarówno w poprawnych lokacjach, jak i poza ustalonymi na początku granicami macierzy. Podobnie jak w poprzednim podpunkcie testowanie tej klasy ograniczy się do używania getterów i setterów.
+
+\subsection{Testy klasy ExchangeSearcher}
+
+\tab Klasa \textit{ExchangeSearcher} przechowuje główną logikę programu i będzie wymagała odpowiednio dopasowanych testów. Dla wyszukiwania arbitrażu (metody \textit{searchForArbitrage}) wprowadzone zostaną następujące zestawy danych: 
+
+\begin{itemize}
+\item macierz zawierającą wyłącznie jeden korzystny arbitraż, spodziewanym efektem jest jego wypisanie,
+\item macierz zawierającą dwa arbitraże, efektem spodziewanym jest wypisanie korzystniejszego,
+\item macierz zawierającą cykl, który nie będzie jednak korzystną wymianą -- spodziewany efekt to informacja o braku arbitrażu,
+\item macierz, która nie będzie posiadała żadnego cyklu -- efektem ponownie powinna być informacja o braku arbitrażu.
+\end{itemize}
+
+Podobnie dla metody \textit{searchForBestExchange} zostaną przygotowane zestawy danych: 
+
+\begin{itemize}
+\item macierz zawierającą wyłącznie jedną ścieżkę, spodziewanym efektem jest jej wypisanie,
+\item macierz zawierającą dwie ścieżki, efektem spodziewanym jest wypisanie korzystniejszej,
+\item macierz nie zawierająca ścieżki docelowej -- efektem powinno być wypisanie komunikatu o braku ścieżki.
+\end{itemize}
+
+
+\subsection{Testy klasy DataReader}
+
+\tab Ta klasa ma za zadanie odczytać poprawnie plik tekstowy, zatem jej testowanie opierać się będzie na podawaniu przygotowanych zestawów danych, podanych prawidłowo oraz z różnymi błędami. W przygotowanych plikach znajdą się:
+
+\begin{itemize}
+\item plik poprawny, efektem powinno być zwrócenie prawidłowej macierzy,
+\item pliki z błędami na pojedynczych znakach w nazwach walut/liczbach/typach opłat, efektem powinno być wypisanie ostrzeżeń na standardowym wyjściu i zwrócenie macierzy ignorujących te~linie,
+\item pliki z błędami kluczowymi dla programu, bez linii oddzielających lub całkiem bez danych, oczekiwanym efektem będzie wyrzucenie wyjątku przez metodę \textit{readData}.
+\end{itemize}
+
+\subsection{Testy klasy GroupOfVisionaires}
+
+\tab Ta klasa odpowiada za złączenie całego programu w jedno, zatem testowanie jej opierać się będzie głównie na testach akceptacyjnych opisanych w specyfikacji funkcjonalnej. Wśród testów jednostkowych dla tej klasy powinny znaleźć się testy metody \textit{checkArgs}, żeby sprawdzić jej poprawną weryfikację dla niewystępujących w macierzy walut oraz dla niepoprawnie podanych kwot.
+
+
+
+\end{document}

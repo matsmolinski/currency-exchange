@@ -1,0 +1,9 @@
+# Waluty (id | symbol | pelna nazwa) 
+0 EUR euro
+1 GBP funt brytyjski
+2 USD dolar amerykanski
+# Kursy walut (id | symbol (waluta wejsciowa) | symbol (waluta wyjsciowa) | kurs | typ oplaty | oplata 
+0 EUR GBP 0.8889 PROC 0.0001
+1 GBP USD 1.2795 PROC 0
+2 EUR USD 1.1370 STALA 0.025
+3 USD EUR 0.8795 STALA 0.01

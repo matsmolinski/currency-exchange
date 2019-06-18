@@ -1,0 +1,6 @@
+\babel@toc {polish}{}
+\contentsline {section}{\numberline {1}Opis projektu}{2}{section.1}
+\contentsline {section}{\numberline {2}Wymagania funkcjonalne}{2}{section.2}
+\contentsline {section}{\numberline {3}Opis wej\IeC {\'s}cia i wyj\IeC {\'s}cia}{2}{section.3}
+\contentsline {section}{\numberline {4}Sytuacje wyj\IeC {\k a}tkowe}{3}{section.4}
+\contentsline {section}{\numberline {5}Testy akceptacyjne programu}{4}{section.5}

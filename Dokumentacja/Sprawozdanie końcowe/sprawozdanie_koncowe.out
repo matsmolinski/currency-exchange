@@ -1,0 +1,18 @@
+\BOOKMARK [1][-]{section.1}{Wstep}{}% 1
+\BOOKMARK [1][-]{section.2}{Dzia\233anie programu}{}% 2
+\BOOKMARK [2][-]{subsection.2.1}{Opis algorytmu}{section.2}% 3
+\BOOKMARK [2][-]{subsection.2.2}{Przyk\233ad dzia\233ania}{section.2}% 4
+\BOOKMARK [1][-]{section.3}{Zmiany wzgledem specyfikacji funkcjonalnej}{}% 5
+\BOOKMARK [2][-]{subsection.3.1}{Argumenty wywo\233ania}{section.3}% 6
+\BOOKMARK [2][-]{subsection.3.2}{Sytuacje wyjatkowe}{section.3}% 7
+\BOOKMARK [1][-]{section.4}{Zmiany wzgledem specyfikacji implementacyjnej}{}% 8
+\BOOKMARK [2][-]{subsection.4.1}{Klasa CurrencyMatrix}{section.4}% 9
+\BOOKMARK [2][-]{subsection.4.2}{Klasa DataReader}{section.4}% 10
+\BOOKMARK [3][-]{subsubsection.4.2.1}{Metoda readData}{subsection.4.2}% 11
+\BOOKMARK [3][-]{subsubsection.4.2.2}{Metoda parseCurrency}{subsection.4.2}% 12
+\BOOKMARK [3][-]{subsubsection.4.2.3}{Metoda parseRate}{subsection.4.2}% 13
+\BOOKMARK [2][-]{subsection.4.3}{Klasa ExchangeSearcher}{section.4}% 14
+\BOOKMARK [2][-]{subsection.4.4}{Klasa GroupOfVisionaires}{section.4}% 15
+\BOOKMARK [3][-]{subsubsection.4.4.1}{Metoda checkArgs}{subsection.4.4}% 16
+\BOOKMARK [3][-]{subsubsection.4.4.2}{Metoda main}{subsection.4.4}% 17
+\BOOKMARK [1][-]{section.5}{Wnioski}{}% 18
